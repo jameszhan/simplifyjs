@@ -90,7 +90,6 @@ function createInjector(modulesToLoad) {
         forEach(modulesToLoad, function(module) {
             if (loadedModules.get(module)) return;
             loadedModules.put(module, true);
-
             try {
                 if (isString(module)) {
                     moduleFn = angularModule(module);
@@ -130,7 +129,6 @@ function createInjector(modulesToLoad) {
     ////////////////////////////////////
     // internal Injector
     ////////////////////////////////////
-
     function createInternalInjector(cache, factory) {
 
         function getService(serviceName) {
@@ -224,64 +222,99 @@ if (require.main === module) {
     var a = require("./annotate.js")
     g.extend(GLOBAL, a);
 
+    var l = require("../loader.js");
+
     var $injectorMinErr = minErr('$injector');
 
+    var angularModule = l.setupModuleLoader(GLOBAL);
+
     var modules = modules || [];
+    var ngModule = angularModule('ng', [], function(){
+        console.log("config ngModule");
+    }).factory('f', function(){
+        return 'F in ngModule';
+    }).run(function(){
+        console.log("Run ngModule");
+    });
+
+    modules.push("ng");
     modules.unshift(['$provide', function($provide) {
-        $provide.constant('a', 'Value A');
-        $provide.value('b', 'Constant B');
-        $provide.factory('c', function(){
-            return 'Factory For C';
+        $provide.constant('a', 'A');
+        $provide.value('b', 'B');
+        $provide.factory('c', function(b){
+            return 'C(' + b + ')';
         });
         $provide.provider('d', function(){
             return {
-                $get: function(){
-                   return 'Provide for D';
+                $get: function(c){
+                   return 'D(' + c + ')';
                 }
             }
         });
-        $provide.service('e', function(){
-            this.value = "Service for E";
+        $provide.service('e', function(d){
+            this.value = "E(" + d + ")";
         });
     }]);
 
-    modules.push(['$provide', function($provide) {
+    modules.push(function($provide) {
         $provide.value({
-            f: 'F constant',
-            g: 'G constant'
+            g: 'G'
         });
         $provide.decorator('f', function($delegate){
             return "Decorator[" + $delegate + "]";
         });
-    }]);
+        $provide.provider({
+            h: function(){
+                return {
+                    $get: ['g', function(g){
+                        return "h(" + g +  ")";
+                    }]
+                };
+            }, i: function(){
+                return {
+                    $get: ['d', 'h', function(d, h){
+                        return "h{" + d +  ", " + h +"}";
+                    }]
+                };
+            }});
+    });
 
     var injector = createInjector(modules);
-    var func = function(a, b, c, d, e, f, g){
-        console.log("arguments: [", [].join.call(arguments, ", "), "]");
-        console.log("this: ", this);
-        console.log();
-    }, func2 = ['a', 'b', 'c', 'd', 'e', 'f', 'g', function(){
-        console.log("arguments: [", [].join.call(arguments, ", "), "]");
-        console.log("this: ", this);
-        console.log();
-    }], target = {name: 'james'};
+    var func = function(a, b, c, d, e, f, g, h, i){
+            console.log("arguments: [", [].join.call(arguments, ", "), "]");
+            console.log("this: ", this);
+            console.log(); },
+        func2 = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', function(){
+            console.log("arguments: [", [].join.call(arguments, ", "), "]");
+            console.log("this: ", this);
+            console.log();}],
+        target = {name: 'james'},
+        locals = {a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7, h: 8, i: 9};
 
-    injector.invoke(func, target, {a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7});
-    injector.invoke(func2, target, {a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7});
+    injector.invoke(func);
+    injector.invoke(func2);
 
     injector.invoke(func, target);
     injector.invoke(func2, target);
 
+    injector.invoke(func, target, locals);
+    injector.invoke(func2, target, locals);
 
-    var Hello = function(a, b, c, d, e, f, g){
+
+    var Hello = function(a, b, c, d, e, f, g, h){
         this.name = "Hello";
         console.log("arguments: [", [].join.apply(arguments, [", "]), "]");
         console.log("this: ", this);
         console.log();
     }
 
-    injector.instantiate(Hello);
+    var ret = injector.instantiate(Hello);
+    console.log("ret: " + ret);
 
+    var ret = injector.instantiate(Hello, locals);
+    console.log("ret: " + ret);
+
+    console.log();
     console.log(injector.get('a'));
 
     console.log(injector.annotate(Hello));

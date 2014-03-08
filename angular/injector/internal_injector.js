@@ -100,33 +100,34 @@ if (require.main === module) {
     });
 
     var func = function(a, b, c){
-        console.log("arguments: [", [].join.call(arguments, ", "), "]");
-        console.log("this: ", this);
-        console.log();
-    }
+            console.log("arguments: [", [].join.call(arguments, ", "), "]");
+            console.log("this: ", this);
+            console.log(); },
+        target = {name: 'james'},
+        locals = {a: 1, b: 2, c: 3};
 
-    var ret = injector.invoke(func, {'hello': 'world'}, {a: 1, b: 2, c: 3});
-    console.log("ret:", ret);
+    injector.invoke(func);
 
-    var ret = injector.invoke(func, {hello: 'world'}, ["a", "b", "c"]);
-    console.log("ret:", ret);
+    injector.invoke(func, target);
 
-    var ret = injector.invoke(func, {hello: 'world'});
-    console.log("ret:", ret);
+    injector.invoke(func, target, locals);
 
     var Hello = function(a, b, c){
+        console.log();
         this.name = "Hello";
         console.log("arguments: [", [].join.apply(arguments, [", "]), "]");
         console.log("this: ", this);
-        console.log();
     }
 
-    var ret = injector.instantiate(Hello, {a: 1, b: 2, c: 3});
-    console.log("ret:", ret);
 
     var ret = injector.instantiate(Hello);
     console.log("ret:", ret);
 
+    var ret = injector.instantiate(Hello, locals);
+    console.log("ret:", ret);
+
+
+    console.log();
     console.log(injector.get('a'));
 
     console.log(injector.annotate(Hello));

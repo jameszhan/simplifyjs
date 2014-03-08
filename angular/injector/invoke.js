@@ -50,24 +50,21 @@ if (require.main === module) {
         return "Mocked Value";
     }
 
+    var func = function(a, b, c){
+            console.log("arguments: [", [].join.call(arguments, ", "), "]");
+            console.log("this: ", this);
+            console.log(); },
+        target = {name: 'james'},
+        locals = {a: 1, b: 2, c: 3};
+
+    invoke(func);
+
+    invoke(func, target);
+
+    invoke(func, target, locals);
+
     invoke(function(){
-        console.log("arguments: [", [].join.call(arguments, ", "), "]");
-        console.log("this: ", this);
-        console.log();
-    }, {'hello': 'world'}, {a: 1, b: 2, c: 3});
-
-
-    invoke(function(a, b, c){
-        console.log("arguments: [", [].join.call(arguments, ", "), "]");
-        console.log("this: ", this);
-        console.log();
-    }, {'hello': 'world'}, {a: 1, b: 2, c: 3});
-
-
-    invoke(function(a, b, c){
-        console.log("arguments: [", [].join.apply(arguments, [", "]), "]");
-        console.log("this: ", this);
-        console.log();
-    }, {hello: 'world'}, "a", "b", "c");
+        func.apply(this, arguments);
+    }, target, locals);
 }
 
