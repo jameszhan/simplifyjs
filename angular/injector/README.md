@@ -82,7 +82,7 @@ invoke函数用于动态执行函数，并自动注入参数，如果locals定�
 
 
 ##createInternalInjector
-createInternalInjector是invoke的增强版，实现了getService方法，加入了cache机制，并可以检测循环依赖，不过最终取值还需要依赖于外部传入的factory方法。[internal_injector.js](https://github.com/jameszhan/simplifyjs/blob/master/angular/injector/internal_injector.js)
+createInternalInjector是invoke的增强版，实现了getService方法，加入了cache机制，并可以检测循环依赖，优先从cache中取值，如果cache中没有，则最终取值还需要依赖于外部传入的factory方法。[internal_injector.js](https://github.com/jameszhan/simplifyjs/blob/master/angular/injector/internal_injector.js)
 
 值得一提的是，instantiate方法是createInternalInjector另一个增强点，创建一个Type实例，并把Type函数绑定到该实例上执行，如果Type函数返回的是函数或者对象，则返回该结果，否则返回该实例。
 
@@ -142,6 +142,167 @@ createInternalInjector是invoke的增强版，实现了getService方法，加入
     console.log(injector.has("g")); //Output: false
     
 ~~~
+
+
+##完整版injector实现
+经过上述的铺垫，整个injector的实现已经呼之欲出了，injector创建了2个internalInjector，一个用于管理provider(providerInjector)，一个用于管理instance（instanceInjector），最终返回instanceInjector。[injector.js](https://github.com/jameszhan/simplifyjs/blob/master/angular/injector/injector.js)
+
+###providerInjector
+创建providerInjector，factory总是返回失败，也就是说，当要使用某provider依赖时，必须先往providerCache中注入它。默认情况下，providerCache中已经添加了$provide，它含有provider，factory，service，value，constant，decorator实现，用于支持不同类型的provider创建。
+####provider
+provider的默认实现，value，factory，service都依赖于它。它用于创建一个provider实例，其必须包含一个$get方法，用于返回需要注入的实例。
+####factory
+根据传入的函数快速创建provider实例。
+####service
+根据传入的构造函数创建service实例，并通过factory创建provider实例。
+####value
+根据valueFn通过factory创建provider实例。
+####constant
+不创建provider，直接更新providerCache和instanceCache。
+####decorator
+创建provider的decorator。
+
+###instanceInjector
+要获取实例，先需要获取实例的provider，再调用instanceInjector调用provider.$get方法得到实例。
+
+###loadModules
+
+1. 如果当前module是function或者是array，则调用providerInjector.invoke执行它们。
+2. 如果是module是string，则需要调用angularModule得到当前的module.[loader.js](https://github.com/jameszhan/simplifyjs/blob/master/angular/loader.js)实现了angular.module方法。一般我们在加载string module之前的先需要调用angular.module方法初始化该模块。值得注意的是，angular.module在调用的时候，其中定义的方法都是延迟执行的，而要到createInjector时也就是loadModules时执行。
+
+
+~~~js
+
+	var l = require("../loader.js");
+ 	
+    var angularModule = l.setupModuleLoader(GLOBAL);
+
+	//请注意看以下不同的provider注入方式
+    var modules = modules || [];
+    var ngModule = angularModule('ng', [], function(){
+        console.log("config ng");
+    }).factory('f', function(){
+        return 'F in ng';
+    }).run(function(){
+        console.log("Run ng");
+    });
+
+    modules.push("ng");
+    modules.unshift(['$provide', function($provide) {
+        $provide.constant('a', 'A');
+        $provide.value('b', 'B');
+        $provide.factory('c', function(b){
+            return 'C(' + b + ')';
+        });
+        $provide.provider('d', function(){
+            return {
+                $get: function(c){
+                   return 'D(' + c + ')';
+                }
+            }
+        });
+        $provide.service('e', function(d){
+            this.value = "E(" + d + ")";
+        });
+    }]);
+
+    modules.push(function($provide) {
+        $provide.value({
+            g: 'G'
+        });
+        $provide.decorator('f', function($delegate){
+            return "Decorator[" + $delegate + "]";
+        });
+        $provide.provider({
+            h: function(){
+                this.$get = ['g', function(g){
+                    return "h(" + g +  ")";
+                }];
+            }, i: function(){
+                return {
+                    $get: ['d', 'h', function(d, h){
+                        return "h{" + d +  ", " + h +"}";
+                    }]
+                };
+            }});
+    });
+
+    var injector = createInjector(modules);
+    //Outputs:
+    //config ng
+	//Run ng
+	
+    var func = function(a, b, c, d, e, f, g, h, i){
+            console.log("arguments: [", [].join.call(arguments, ", "), "]");
+            console.log("this: ", this);
+            console.log(); },
+        func2 = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', function(){
+            console.log("arguments: [", [].join.call(arguments, ", "), "]");
+            console.log("this: ", this);
+            console.log();}],
+        target = {name: 'james'},
+        locals = {a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7, h: 8, i: 9};
+
+	//E 是service注入的，是一个对象，故显示为[object Object]
+    injector.invoke(func);
+    //Outputs:
+    //arguments: [ A, B, C(B), D(C(B)), [object Object], Decorator[F in ng], G, h(G), h{D(C(B)), h(G)} ]
+	//this:  undefined
+	
+    injector.invoke(func2);
+    //Outputs:
+    //arguments: [ A, B, C(B), D(C(B)), [object Object], Decorator[F in ng], G, h(G), h{D(C(B)), h(G)} ]
+	//this:  undefined
+
+    injector.invoke(func, target);
+    //Outputs:
+    //arguments: [ A, B, C(B), D(C(B)), [object Object], Decorator[F in ng], G, h(G), h{D(C(B)), h(G)} ]
+	//this:  { name: 'james' }
+	
+    injector.invoke(func2, target);
+    //Outputs:
+    //arguments: [ A, B, C(B), D(C(B)), [object Object], Decorator[F in ng], G, h(G), h{D(C(B)), h(G)} ]
+	//this:  { name: 'james' }
+
+    injector.invoke(func, target, locals);
+    //Outputs:
+    //arguments: [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
+	//this:  { name: 'james' }
+	
+    injector.invoke(func2, target, locals);
+	//Outputs:
+	//arguments: [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
+	//this:  { name: 'james' }
+
+    var Hello = function(a, b, c, d, e, f, g, h){
+        this.name = "Hello";
+        console.log("arguments: [", [].join.apply(arguments, [", "]), "]");
+        console.log("this: ", this);
+        console.log();
+    }
+
+    var ret = injector.instantiate(Hello);
+    //Outputs:
+    //arguments: [ A, B, C(B), D(C(B)), [object Object], Decorator[F in ng], G, h(G) ]
+	//this:  { name: 'Hello' }
+    console.log("ret: " + ret); //Output: "ret:  { name: 'Hello' }"
+
+    var ret = injector.instantiate(Hello, locals);
+    //Outputs:
+    //arguments: [ 1, 2, 3, 4, 5, 6, 7, 8 ]
+	//this:  { name: 'Hello' }
+    console.log("ret: " + ret); //Output: "ret:  { name: 'Hello' }"
+
+    console.log(injector.get('a')); //Output: 'A'
+
+    console.log(injector.annotate(Hello)); //Output: "[ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' ]"
+
+    console.log(injector.has("a")); //Output: true
+    console.log(injector.has("b")); //Output: true
+    console.log(injector.has("z")); //Output: false
+
+~~~
+
 
 
 

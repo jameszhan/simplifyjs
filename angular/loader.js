@@ -35,36 +35,23 @@ function setupModuleLoader(window) {
                 }
 
                 var invokeQueue = [];
-
                 var runBlocks = [];
-
                 var config = invokeLater('$injector', 'invoke');
-
                 var moduleInstance = {
                     // Private state
                     _invokeQueue: invokeQueue,
                     _runBlocks: runBlocks,
-
                     requires: requires,
-
                     name: name,
 
                     provider: invokeLater('$provide', 'provider'),
-
                     factory: invokeLater('$provide', 'factory'),
-
                     service: invokeLater('$provide', 'service'),
-
                     value: invokeLater('$provide', 'value'),
-
                     constant: invokeLater('$provide', 'constant', 'unshift'),
-
                     animation: invokeLater('$animateProvider', 'register'),
-
                     filter: invokeLater('$filterProvider', 'register'),
-
                     controller: invokeLater('$controllerProvider', 'register'),
-
                     directive: invokeLater('$compileProvider', 'directive'),
 
                     config: config,

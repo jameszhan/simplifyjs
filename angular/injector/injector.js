@@ -230,11 +230,11 @@ if (require.main === module) {
 
     var modules = modules || [];
     var ngModule = angularModule('ng', [], function(){
-        console.log("config ngModule");
+        console.log("config ng");
     }).factory('f', function(){
-        return 'F in ngModule';
+        return 'F in ng';
     }).run(function(){
-        console.log("Run ngModule");
+        console.log("Run ng");
     });
 
     modules.push("ng");
@@ -265,11 +265,9 @@ if (require.main === module) {
         });
         $provide.provider({
             h: function(){
-                return {
-                    $get: ['g', function(g){
-                        return "h(" + g +  ")";
-                    }]
-                };
+                this.$get = ['g', function(g){
+                    return "h(" + g +  ")";
+                }];
             }, i: function(){
                 return {
                     $get: ['d', 'h', function(d, h){
@@ -309,10 +307,10 @@ if (require.main === module) {
     }
 
     var ret = injector.instantiate(Hello);
-    console.log("ret: " + ret);
+    console.log("ret: ", ret);
 
     var ret = injector.instantiate(Hello, locals);
-    console.log("ret: " + ret);
+    console.log("ret: ", ret);
 
     console.log();
     console.log(injector.get('a'));
