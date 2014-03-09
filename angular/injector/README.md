@@ -37,7 +37,7 @@ annotate用于解析函数定义，并剥离出其依赖的参数列表。[annot
 ~~~js
 
 expect(annotate(function(a, b, c){})).toEqual(['a', 'b', 'c']);
-expect(annotate(['a', 'b', 'c', function(a, b, c){}]));
+expect(annotate(['a', 'b', 'c', function(a, b, c){}])).toEqual(['a', 'b', 'c']);
 
 ~~~
 
