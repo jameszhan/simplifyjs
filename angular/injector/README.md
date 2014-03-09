@@ -1,4 +1,4 @@
-# 抽茧剥丝————AngularJS Injector 分析
+# 抽茧剥丝——AngularJS Injector 分析
 
 ##常用函数说明
 
@@ -18,9 +18,6 @@
 	
 	expect(log).toEqual(['name: misko', 'gender: male']);
 ~~~
-
-
-
 
 
 **extend** 复制（多个）源对象属性到目标对象。
@@ -85,6 +82,66 @@ invoke函数用于动态执行函数，并自动注入参数，如果locals定�
 
 
 ##createInternalInjector
+createInternalInjector是invoke的增强版，实现了getService方法，加入了cache机制，并可以检测循环依赖，不过最终取值还需要依赖于外部传入的factory方法。[internal_injector.js](https://github.com/jameszhan/simplifyjs/blob/master/angular/injector/internal_injector.js)
+
+值得一提的是，instantiate方法是createInternalInjector另一个增强点，创建一个Type实例，并把Type函数绑定到该实例上执行，如果Type函数返回的是函数或者对象，则返回该结果，否则返回该实例。
+
+
+~~~js
+
+	var injector = createInternalInjector({}, function(serviceName){
+        return "Found: " + serviceName;
+    });
+
+    var func = function(a, b, c){
+            console.log("arguments: [", [].join.call(arguments, ", "), "]");
+            console.log("this: ", this);
+            console.log(); },
+        target = {name: 'james'},
+        locals = {a: 1, b: 2, c: 3};
+
+    injector.invoke(func);
+    //Outputs:
+    //arguments: [ Found: a, Found: b, Found: c ]
+	//this:  undefined
+
+    injector.invoke(func, target);
+    //Outputs:
+    //arguments: [ Found: a, Found: b, Found: c ]
+	//this:  { name: 'james' }
+
+    injector.invoke(func, target, locals);
+    //Outputs:
+    //arguments: [ 1, 2, 3 ]
+	//this:  { name: 'james' }
+
+    var Hello = function(a, b, c){
+        this.name = "Hello";
+        console.log("arguments: [", [].join.apply(arguments, [", "]), "]");
+        console.log("this: ", this);
+    }
+
+    var ret = injector.instantiate(Hello);
+    //Outputs:
+    //arguments: [ Found: a, Found: b, Found: c ]
+	//this:  { name: 'Hello' }	
+    console.log("ret:", ret); //Output: "ret: { name: 'Hello' }"    
+
+    var ret = injector.instantiate(Hello, locals);
+	//Outputs:
+    //arguments: [ 1, 2, 3 ]
+	//this:  { name: 'Hello' }
+    console.log("ret:", ret); //Output: "ret: { name: 'Hello' }"
+
+    console.log(injector.get('a')); // Output: "Found: a"
+
+    console.log(injector.annotate(Hello)); //Output: "[ 'a', 'b', 'c' ]"
+
+    console.log(injector.has("a")); //Output: true
+    console.log(injector.has("b")); //Output: true
+    console.log(injector.has("g")); //Output: false
+    
+~~~
 
 
 

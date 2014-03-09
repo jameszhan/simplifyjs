@@ -71,7 +71,6 @@ function createInternalInjector(cache, factory) {
         Constructor.prototype = (isArray(Type) ? Type[Type.length - 1] : Type).prototype;
         instance = new Constructor();
         returnedValue = invoke(Type, instance, locals);
-
         return isObject(returnedValue) || isFunction(returnedValue) ? returnedValue : instance;
     }
 
