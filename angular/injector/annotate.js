@@ -35,7 +35,7 @@ function annotate(fn) {
 }
 
 if (require.main === module) {
-    var g = require("../../global.js")
+    var g = require("../../global.js");
     g.extend(GLOBAL, g);
     console.log("annotate(function(a, b, c)) = ", annotate(function(a, b, c){}));
     console.log("annotate(['a', 'b', 'c', function(a, b, c)]) = ", annotate(['a', 'b', 'c', function(a, b, c){}]));

@@ -136,7 +136,7 @@ function extend(dst) {
         }
     });
 
-    setHashKey(dst,h);
+    setHashKey(dst, h);
     return dst;
 }
 
@@ -591,8 +591,8 @@ extend(exports, {
     'equals': equals,
     'forEach': forEach,
     'reverseParams': reverseParams,
-    'noop':noop,
-    'bind':bind,
+    'noop': noop,
+    'bind': bind,
     'valueFn': valueFn,
     'toJson': toJson,
     'fromJson': fromJson,
@@ -604,6 +604,7 @@ extend(exports, {
     'isObject': isObject,
     'isNumber': isNumber,
     'isElement': isElement,
+    'isRegExp': isRegExp,
     'isArray': isArray,
     'isDate': isDate,
     'lowercase': lowercase,
