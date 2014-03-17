@@ -30,13 +30,10 @@ if (require.main === module) {
     function display(o, name){
         Object.traceObj(name, o);
         console.log("\nprint: ", name);
-        var str = "", i = 0, parents = Object.parents(o);
-        for(; i < parents.length; i++) {
-            if(i > 0) {
-                str += "-> "
-            }
-            str += Object.objectName(parents[i]);
-        }
+        var str = "", parents = Object.parents(o);
+        str += parents.map(function(e){
+            return Object.objectName(e);
+        }).join(" -> ");
         console.log(str);
     }
 

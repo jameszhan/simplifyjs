@@ -21,14 +21,7 @@ if (require.main === module) {
 
 
     function display(o){
-        var str = "", i = 0, parents = Object.parents(o);
-        for(; i < parents.length; i++) {
-            if(i > 0) {
-                str += " -> "
-            }
-            str += Object.objectName(parents[i]);
-        }
-        console.log(str);
+        console.log(Object.parents(o).map(function(e){return Object.objectName(e);}).join(" -> "));
     }
 
 }
