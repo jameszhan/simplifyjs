@@ -1,22 +1,17 @@
 if (require.main === module) {
 
-    var Hello = function(){
-        this.name = 'doHello';
+    function counter(n) {
         return {
-            hello: 'world'
-        };
-    };
+            get count(){return n++;},
+            set count(m) {n = m;}
+        }
+    }
 
-    var Hello2 = function(){
-        this.name = 'doHello';
-        this.hello = "world";
-    };
-
-    var h1 = new Hello();
-    var h2 = new Hello2();
-
-    console.log(h1.hello === 'world');
-    console.log(h1.name === undefined);
-    console.log(h2.name === 'doHello');
-    console.log(h2.hello === 'doHello');
+    var c = counter(3);
+    console.log(c.count);
+    console.log(c.count);
+    c.count = 100;
+    console.log(c.count);
+    console.log(c.count);
+    console.log(c.count);
 }
