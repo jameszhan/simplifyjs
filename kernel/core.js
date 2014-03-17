@@ -1,8 +1,8 @@
 (function(ns){
     'use strict';
 
+    //实现自己的对象跟踪系统
     var lobby = {};
-
     if (typeof Object.objectId !== 'function') {
         Object.objectId = function(){
             var generateId = function(){
@@ -22,14 +22,6 @@
                 }
             };
         }();
-    }
-
-    if (typeof Object.beget !== 'function') {
-        Object.beget = function(o){
-            var F = function(){};
-            F.prototype = o;
-            return new F();
-        };
     }
 
     if (typeof Object.objectName !== 'function') {
@@ -64,6 +56,14 @@
         Object.traceObj("Boolean.prototype", Boolean.prototype);
         Object.traceObj("Math", Math);
         Object.traceObj("Math.prototype", Math.prototype);
+    }
+
+    if (typeof Object.beget !== 'function') {
+        Object.beget = function(o){
+            var F = function(){};
+            F.prototype = o;
+            return new F();
+        };
     }
 
     if (typeof Object.parents !== 'function') {
