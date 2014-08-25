@@ -82,7 +82,7 @@ function setupModuleLoader(window) {
 exports.setupModuleLoader = setupModuleLoader;
 
 if (require.main === module) {
-    var g = require("../global.js")
+    var g = require("../global.js");
     g.extend(GLOBAL, g);
 
     var angularModule = setupModuleLoader(GLOBAL);

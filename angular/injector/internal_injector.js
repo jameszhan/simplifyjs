@@ -116,13 +116,13 @@ if (require.main === module) {
         this.name = "Hello";
         console.log("arguments: [", [].join.apply(arguments, [", "]), "]");
         console.log("this: ", this);
-    }
+    };
 
 
     var ret = injector.instantiate(Hello);
     console.log("ret:", ret);
 
-    var ret = injector.instantiate(Hello, locals);
+    ret = injector.instantiate(Hello, locals);
     console.log("ret:", ret);
 
 

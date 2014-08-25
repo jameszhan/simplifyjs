@@ -48,7 +48,7 @@ if (require.main === module) {
 
     var getService = function mockedService(serviceName) {
         return "Mocked Value";
-    }
+    };
 
     var func = function(a, b, c){
             console.log("arguments: [", [].join.call(arguments, ", "), "]");

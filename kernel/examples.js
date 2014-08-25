@@ -8,7 +8,7 @@ if (require.main === module) {
         stop: function(){
             console.log("Stop " + Object.objectName(this));
         }
-    }
+    };
 
     var Car = Object.beget(Vehicle);
     Car.tweet = function(){
