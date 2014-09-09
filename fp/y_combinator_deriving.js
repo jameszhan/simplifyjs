@@ -60,6 +60,19 @@ if (require.main === module) {
     };
     var fac5 = y(fac_gen);
     console.log(fac5(fac5)(5));
+
+    var fib_gen = function(f){
+        return function(n){
+            return n <= 2 ? 1 : f(n - 1) + f(n - 2);
+        };
+    };
+
+    var i = 0;
+    while (i++ < 10) {
+        console.log("fib", i, y(fib_gen)(y(fib_gen))(i));
+        console.log("fac", i, y(fac_gen)(y(fac_gen))(i));
+    }
+
     // fac5(fac5)形式有点多余，我们可以更简练些。
     var y1 = function(gen) {
         var g = function(f) {
